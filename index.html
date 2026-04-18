@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faltas Proporcionais e Compensação</title>
+    <title>Sistema de Faltas Proporcionais e Compensação</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -13,6 +13,8 @@
             --danger: #ef4444;
             --danger-hover: #dc2626;
             --warning: #f59e0b;
+            --secondary: #475569;
+            --secondary-hover: #334155;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
@@ -106,9 +108,19 @@
         .btn-add { background-color: var(--primary); }
         .btn-add:hover { background-color: var(--primary-hover); }
 
-        .btn-export { background-color: var(--success); width: 100%; margin-top: 1rem;}
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn-export { background-color: var(--success); flex: 1; }
         .btn-export:hover { background-color: var(--success-hover); }
         .btn-export:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        .btn-print { background-color: var(--secondary); flex: 1; }
+        .btn-print:hover { background-color: var(--secondary-hover); }
+        .btn-print:disabled { background-color: #9ca3af; cursor: not-allowed; }
 
         .btn-remove {
             background-color: var(--danger);
@@ -156,7 +168,6 @@
         .zero-val { color: #94a3b8; }
         .highlight-val { font-weight: bold; color: #15803d; }
 
-        /* Nova classe para exibir o quanto foi compensado */
         .comp-info {
             display: block;
             font-size: 0.75rem;
@@ -174,6 +185,52 @@
 
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+        }
+
+        /* =========================================
+           ESTILOS EXCLUSIVOS PARA IMPRESSÃO
+           ========================================= */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+
+            body {
+                background-color: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 0;
+            }
+
+            /* Esconde elementos interativos */
+            .form-grid, 
+            .button-group, 
+            .btn-remove, 
+            .error {
+                display: none !important;
+            }
+
+            /* Esconde a coluna de Ação (última coluna) */
+            th:last-child, 
+            td:last-child {
+                display: none !important;
+            }
+
+            /* Força impressão das cores de fundo */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            table { font-size: 0.75rem; }
+            th, td { padding: 0.4rem 0.2rem; }
+            tr { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -208,7 +265,7 @@
                     <tr>
                         <th rowspan="2" class="th-neutral">Aluno</th>
                         <th rowspan="2" class="th-neutral" title="Faltas Totais">Faltas<br>Iniciais</th>
-                        <th colspan="8" class="th-original">Distribuição</th>
+                        <th colspan="8" class="th-original">Distribuição Original (Antes)</th>
                         <th rowspan="2" class="th-neutral" title="Compensações Entregues">Comp.<br>Recebida</th>
                         <th colspan="8" class="th-final">Distribuição Final (Após Compensação)</th>
                         <th rowspan="2" class="th-neutral" title="Pontos não utilizados">Sobras</th>
@@ -239,9 +296,14 @@
             </table>
         </div>
 
-        <button class="btn-export" id="btnExportar" onclick="exportarExcel()" disabled>
-            Baixar Relatório Completo (Excel)
-        </button>
+        <div class="button-group">
+            <button class="btn-export" id="btnExportar" onclick="exportarExcel()" disabled>
+                Baixar Relatório Completo (Excel)
+            </button>
+            <button class="btn-print" id="btnImprimir" onclick="window.print()" disabled>
+                🖨️ Imprimir Relatório (A4)
+            </button>
+        </div>
     </div>
 
     <script>
@@ -365,7 +427,6 @@
                     let classeAdicional = valorFinal === 0 ? 'zero-val' : '';
                     let formatacao = usadas > 0 ? `class="td-final highlight-val"` : `class="td-final ${classeAdicional}"`;
                     
-                    // Adiciona o (-X) logo abaixo do valor da matéria se houver abatimento
                     let conteudoCelula = valorFinal;
                     if (usadas > 0) {
                         conteudoCelula += `<span class="comp-info" title="Compensações aplicadas nesta matéria">(-${usadas})</span>`;
@@ -384,7 +445,9 @@
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('btnExportar').disabled = registrosAlunos.length === 0;
+            const temAlunos = registrosAlunos.length > 0;
+            document.getElementById('btnExportar').disabled = !temAlunos;
+            document.getElementById('btnImprimir').disabled = !temAlunos;
         }
 
         function exportarExcel() {
