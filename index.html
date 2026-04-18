@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Faltas Proporcionais</title>
+    <title>Faltas Proporcionais e Compensação</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -12,11 +12,16 @@
             --success-hover: #15803d;
             --danger: #ef4444;
             --danger-hover: #dc2626;
+            --warning: #f59e0b;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
+            --border: #cbd5e1;
+            
+            /* Cores de grupo da tabela */
+            --bg-original: #f0f9ff;
+            --bg-final: #f0fdf4;
+            --bg-neutral: #f8fafc;
         }
 
         * {
@@ -40,7 +45,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             width: 100%;
-            max-width: 950px;
+            max-width: 1300px;
             padding: 2rem;
             display: flex;
             flex-direction: column;
@@ -55,7 +60,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr auto;
+            grid-template-columns: 2fr 1fr 1fr auto;
             gap: 1rem;
             align-items: end;
             background: #f1f5f9;
@@ -123,25 +128,42 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         th, td {
-            padding: 0.75rem 1rem;
+            padding: 0.6rem 0.4rem;
             text-align: center;
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
+            vertical-align: middle;
         }
 
         th {
-            background-color: #f8fafc;
             font-weight: 600;
             white-space: nowrap;
         }
 
-        td:first-child { text-align: left; font-weight: 500; }
+        .th-neutral { background-color: var(--bg-neutral); }
+        .th-original { background-color: #bae6fd; color: #0369a1; }
+        .th-final { background-color: #bbf7d0; color: #15803d; }
+
+        .td-original { background-color: var(--bg-original); }
+        .td-final { background-color: var(--bg-final); }
+        .sobras-col { font-weight: bold; color: var(--warning); background-color: #fffbeb; }
+
+        td:first-child { text-align: left; font-weight: 500; min-width: 150px; background-color: #fff; }
         
-        tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) { background-color: #fcfcfc; }
+        .zero-val { color: #94a3b8; }
+        .highlight-val { font-weight: bold; color: #15803d; }
+
+        /* Nova classe para exibir o quanto foi compensado */
+        .comp-info {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 2px;
+        }
 
         .error {
             color: var(--danger);
@@ -150,7 +172,7 @@
             display: none;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
         }
     </style>
@@ -158,7 +180,7 @@
 <body>
 
     <div class="container">
-        <h1>Lançamento de Faltas Proporcionais 1º Bimestre 2026</h1>
+        <h1>Sistema Ee Faltas Proporcionais e Compensação</h1>
 
         <div class="form-grid">
             <div class="input-group">
@@ -171,7 +193,12 @@
                 <input type="number" id="faltaInput" min="1" max="48" onkeypress="handleEnter(event)">
             </div>
 
-            <button class="btn-add" onclick="adicionarAluno()">Adicionar</button>
+            <div class="input-group">
+                <label for="compInput">Compensações Realizadas:</label>
+                <input type="number" id="compInput" min="0" placeholder="Ex: 19 (Opcional)" onkeypress="handleEnter(event)">
+            </div>
+
+            <button class="btn-add" onclick="adicionarAluno()">Lançar</button>
             <span class="error" id="errorMsg">Preencha o nome e um número de faltas válido (1 a 48).</span>
         </div>
 
@@ -179,32 +206,49 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Aluno</th>
-                        <th>Faltas</th>
-                        <th>Port.</th>
-                        <th>Mat.</th>
-                        <th>Ed. Fís.</th>
-                        <th>Artes</th>
-                        <th>Geo.</th>
-                        <th>Hist.</th>
-                        <th>Ciên.</th>
-                        <th>Ens. Rel.</th>
-                        <th>Ação</th>
+                        <th rowspan="2" class="th-neutral">Aluno</th>
+                        <th rowspan="2" class="th-neutral" title="Faltas Totais">Faltas<br>Iniciais</th>
+                        <th colspan="8" class="th-original">Distribuição</th>
+                        <th rowspan="2" class="th-neutral" title="Compensações Entregues">Comp.<br>Recebida</th>
+                        <th colspan="8" class="th-final">Distribuição Final (Após Compensação)</th>
+                        <th rowspan="2" class="th-neutral" title="Pontos não utilizados">Sobras</th>
+                        <th rowspan="2" class="th-neutral">Ação</th>
+                    </tr>
+                    <tr>
+                        <th class="th-original" title="Português">Por</th>
+                        <th class="th-original" title="Matemática">Mat</th>
+                        <th class="th-original" title="Educação Física">EdF</th>
+                        <th class="th-original" title="Artes">Art</th>
+                        <th class="th-original" title="Geografia">Geo</th>
+                        <th class="th-original" title="História">His</th>
+                        <th class="th-original" title="Ciências">Cie</th>
+                        <th class="th-original" title="Ensino Religioso">Rel</th>
+                        
+                        <th class="th-final" title="Português">Por</th>
+                        <th class="th-final" title="Matemática">Mat</th>
+                        <th class="th-final" title="Educação Física">EdF</th>
+                        <th class="th-final" title="Artes">Art</th>
+                        <th class="th-final" title="Geografia">Geo</th>
+                        <th class="th-final" title="História">His</th>
+                        <th class="th-final" title="Ciências">Cie</th>
+                        <th class="th-final" title="Ensino Religioso">Rel</th>
                     </tr>
                 </thead>
                 <tbody id="tabelaCorpo">
-                    </tbody>
+                </tbody>
             </table>
         </div>
 
         <button class="btn-export" id="btnExportar" onclick="exportarExcel()" disabled>
-            Baixar Planilha (Excel)
+            Baixar Relatório Completo (Excel)
         </button>
     </div>
 
     <script>
-        // Dados mestre
         const disciplinas = ["Língua Portuguesa", "Matemática", "Educação Física", "Artes", "Geografia", "História", "Ciências", "Ensino Religioso"];
+        
+        const limitesMaximos = [3, 3, 1, 1, 1, 1, 1, 0];
+
         const tabelaFaltas = {
             1: [1,0,0,0,0,0,0,0], 2: [1,1,0,0,0,0,0,0], 3: [1,1,0,0,0,0,1,0],
             4: [1,1,1,0,0,0,1,0], 5: [1,1,1,1,0,0,1,0], 6: [2,1,1,1,0,0,1,0],
@@ -224,72 +268,115 @@
             46: [12,11,4,4,4,4,6,1], 47: [12,12,4,4,4,4,6,1], 48: [13,12,4,4,4,4,6,1]
         };
 
-        // Estado da aplicação
         let registrosAlunos = [];
 
         function handleEnter(event) {
             if (event.key === 'Enter') adicionarAluno();
         }
 
+        function processarCompensacoes(distribuicaoOriginal, totalCompensacoes) {
+            let compRestantes = totalCompensacoes;
+            let finalDist = [...distribuicaoOriginal];
+            let compUsadas = [0, 0, 0, 0, 0, 0, 0, 0];
+
+            if (compRestantes > 0) {
+                for (let i = 0; i < finalDist.length; i++) {
+                    let faltasAtuais = finalDist[i];
+                    let limiteMax = limitesMaximos[i];
+
+                    if (faltasAtuais > limiteMax && compRestantes > 0) {
+                        let excesso = faltasAtuais - limiteMax;
+                        let abater = Math.min(excesso, compRestantes);
+                        
+                        finalDist[i] -= abater;
+                        compUsadas[i] = abater;
+                        compRestantes -= abater;
+                    }
+                }
+            }
+
+            return { final: finalDist, usadas: compUsadas, sobras: compRestantes };
+        }
+
         function adicionarAluno() {
             const inputNome = document.getElementById('nomeInput');
             const inputFalta = document.getElementById('faltaInput');
+            const inputComp = document.getElementById('compInput');
             const errorMsg = document.getElementById('errorMsg');
             
             const nome = inputNome.value.trim();
             const faltas = parseInt(inputFalta.value);
+            const compensacoes = inputComp.value === "" ? 0 : parseInt(inputComp.value);
 
-            // Validação
-            if (!nome || isNaN(faltas) || faltas < 1 || faltas > 48) {
+            if (!nome || isNaN(faltas) || faltas < 1 || faltas > 48 || isNaN(compensacoes) || compensacoes < 0) {
                 errorMsg.style.display = 'block';
                 return;
             }
             errorMsg.style.display = 'none';
 
-            // Registra os dados
-            const distribuicao = tabelaFaltas[faltas];
+            const distribuicaoOriginal = tabelaFaltas[faltas];
+            const processamento = processarCompensacoes(distribuicaoOriginal, compensacoes);
+
             registrosAlunos.push({
                 nome: nome,
                 totalFaltas: faltas,
-                valores: distribuicao
+                totalCompensacoes: compensacoes,
+                valoresOriginais: distribuicaoOriginal,
+                valoresFinais: processamento.final,
+                compensacoesUsadas: processamento.usadas,
+                sobras: processamento.sobras
             });
 
-            // Atualiza interface
             renderizarTabela();
             
-            // Limpa os campos e foca no nome para o próximo
             inputNome.value = '';
             inputFalta.value = '';
+            inputComp.value = '';
             inputNome.focus();
         }
 
         function removerAluno(index) {
-            // Remove 1 elemento a partir do índice clicado
             registrosAlunos.splice(index, 1);
             renderizarTabela();
         }
 
         function renderizarTabela() {
             const tbody = document.getElementById('tabelaCorpo');
-            tbody.innerHTML = ''; // Limpa tabela
+            tbody.innerHTML = ''; 
 
             registrosAlunos.forEach((aluno, index) => {
                 const tr = document.createElement('tr');
                 
-                // Nome e Total
                 tr.innerHTML = `
                     <td>${aluno.nome}</td>
-                    <td><strong>${aluno.totalFaltas}</strong></td>
+                    <td style="background:#f8fafc"><strong>${aluno.totalFaltas}</strong></td>
                 `;
 
-                // Colunas das disciplinas
-                aluno.valores.forEach(valor => {
-                    tr.innerHTML += `<td style="color: ${valor === 0 ? '#94a3b8' : 'inherit'}">${valor}</td>`;
+                aluno.valoresOriginais.forEach(valor => {
+                    tr.innerHTML += `<td class="td-original ${valor === 0 ? 'zero-val' : ''}">${valor}</td>`;
                 });
 
-                // Coluna de Ação (Botão Remover)
+                tr.innerHTML += `<td style="background:#f8fafc"><strong>${aluno.totalCompensacoes > 0 ? aluno.totalCompensacoes : '-'}</strong></td>`;
+
+                for(let i = 0; i < 8; i++) {
+                    let valorFinal = aluno.valoresFinais[i];
+                    let usadas = aluno.compensacoesUsadas[i];
+                    
+                    let classeAdicional = valorFinal === 0 ? 'zero-val' : '';
+                    let formatacao = usadas > 0 ? `class="td-final highlight-val"` : `class="td-final ${classeAdicional}"`;
+                    
+                    // Adiciona o (-X) logo abaixo do valor da matéria se houver abatimento
+                    let conteudoCelula = valorFinal;
+                    if (usadas > 0) {
+                        conteudoCelula += `<span class="comp-info" title="Compensações aplicadas nesta matéria">(-${usadas})</span>`;
+                    }
+                    
+                    tr.innerHTML += `<td ${formatacao}>${conteudoCelula}</td>`;
+                }
+
                 tr.innerHTML += `
-                    <td>
+                    <td class="sobras-col">${aluno.sobras > 0 ? aluno.sobras : '-'}</td>
+                    <td style="background:#fff">
                         <button class="btn-remove" onclick="removerAluno(${index})" title="Remover aluno">X</button>
                     </td>
                 `;
@@ -297,30 +384,35 @@
                 tbody.appendChild(tr);
             });
 
-            // Habilita ou desabilita o botão de exportar dependendo se há alunos na lista
             document.getElementById('btnExportar').disabled = registrosAlunos.length === 0;
         }
 
         function exportarExcel() {
             if (registrosAlunos.length === 0) return;
 
-            // Cria o cabeçalho do CSV
-            let csvContent = "Nome do Aluno;Total de Faltas;" + disciplinas.join(";") + "\r\n";
+            let cabecalhoOriginal = disciplinas.map(d => `${d} (Original)`).join(";");
+            let cabecalhoFinal = disciplinas.map(d => `${d} (Final)`).join(";");
+            
+            let csvContent = `Nome do Aluno;Faltas Totais;${cabecalhoOriginal};Compensações Recebidas;${cabecalhoFinal};Sobras\r\n`;
 
-            // Adiciona as linhas
             registrosAlunos.forEach(aluno => {
-                const linha = [aluno.nome, aluno.totalFaltas, ...aluno.valores];
+                const linha = [
+                    aluno.nome, 
+                    aluno.totalFaltas, 
+                    ...aluno.valoresOriginais,
+                    aluno.totalCompensacoes,
+                    ...aluno.valoresFinais, 
+                    aluno.sobras
+                ];
                 csvContent += linha.join(";") + "\r\n";
             });
 
-            // Cria o arquivo virtual garantindo a codificação UTF-8
             const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             
-            // Força o download
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", "relatorio_faltas_proporcionais.csv");
+            link.setAttribute("download", "relatorio_faltas_completo.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
