@@ -243,8 +243,8 @@
             </div>
             
             <div class="input-group">
-                <label for="faltaInput">Total Faltas (1 a 48):</label>
-                <input type="number" id="faltaInput" min="1" max="48" onkeypress="handleEnter(event)">
+                <label for="faltaInput">Total Faltas (0 a 48):</label>
+                <input type="number" id="faltaInput" min="0" max="48" onkeypress="handleEnter(event)">
             </div>
 
             <div class="input-group">
@@ -253,7 +253,7 @@
             </div>
 
             <button class="btn-add" onclick="adicionarAluno()">Lançar</button>
-            <span class="error" id="errorMsg">Preencha o nome e um número de faltas válido (1 a 48).</span>
+            <span class="error" id="errorMsg">Preencha o nome e um número de faltas válido (0 a 48).</span>
         </div>
 
         <div class="table-container">
@@ -309,6 +309,7 @@
         const limitesMaximos = [3, 3, 1, 1, 1, 1, 1, 0];
 
         const tabelaFaltas = {
+            0: [0,0,0,0,0,0,0,0],
             1: [1,0,0,0,0,0,0,0], 2: [1,1,0,0,0,0,0,0], 3: [1,1,0,0,0,0,1,0],
             4: [1,1,1,0,0,0,1,0], 5: [1,1,1,1,0,0,1,0], 6: [2,1,1,1,0,0,1,0],
             7: [2,2,1,1,0,0,1,0], 8: [2,2,1,1,1,0,1,0], 9: [2,2,1,1,1,1,1,0],
@@ -367,7 +368,7 @@
             const faltas = parseInt(inputFalta.value);
             const compensacoes = inputComp.value === "" ? 0 : parseInt(inputComp.value);
 
-            if (!nome || isNaN(faltas) || faltas < 1 || faltas > 48 || isNaN(compensacoes) || compensacoes < 0) {
+            if (!nome || isNaN(faltas) || faltas < 0 || faltas > 48 || isNaN(compensacoes) || compensacoes < 0) {
                 errorMsg.style.display = 'block';
                 return;
             }
@@ -411,14 +412,12 @@
                     <td style="background:#f8fafc"><strong>${aluno.totalFaltas}</strong></td>
                 `;
 
-                // Colunas da Distribuição Original
                 aluno.valoresOriginais.forEach(valor => {
                     tr.innerHTML += `<td class="td-original ${valor === 0 ? 'zero-val' : ''}">${valor}</td>`;
                 });
 
                 tr.innerHTML += `<td style="background:#f8fafc"><strong>${aluno.totalCompensacoes > 0 ? aluno.totalCompensacoes : '-'}</strong></td>`;
 
-                // Colunas Finais: Só renderiza os números e a cor se a compensação for MAIOR que 0
                 if (aluno.totalCompensacoes > 0) {
                     for(let i = 0; i < 8; i++) {
                         let valorFinal = aluno.valoresFinais[i];
@@ -469,7 +468,7 @@
                     aluno.totalFaltas, 
                     ...aluno.valoresOriginais,
                     aluno.totalCompensacoes,
-                    ...aluno.valoresFinais, 
+                    ...aluno.valoresFinais,
                     aluno.sobras
                 ];
                 csvContent += linha.join(";") + "\r\n";
