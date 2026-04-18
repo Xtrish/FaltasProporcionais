@@ -208,7 +208,6 @@
                 padding: 0;
             }
 
-            /* Esconde elementos interativos */
             .form-grid, 
             .button-group, 
             .btn-remove, 
@@ -216,13 +215,11 @@
                 display: none !important;
             }
 
-            /* Esconde a coluna de Ação (última coluna) */
             th:last-child, 
             td:last-child {
                 display: none !important;
             }
 
-            /* Força impressão das cores de fundo */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -414,25 +411,33 @@
                     <td style="background:#f8fafc"><strong>${aluno.totalFaltas}</strong></td>
                 `;
 
+                // Colunas da Distribuição Original
                 aluno.valoresOriginais.forEach(valor => {
                     tr.innerHTML += `<td class="td-original ${valor === 0 ? 'zero-val' : ''}">${valor}</td>`;
                 });
 
                 tr.innerHTML += `<td style="background:#f8fafc"><strong>${aluno.totalCompensacoes > 0 ? aluno.totalCompensacoes : '-'}</strong></td>`;
 
-                for(let i = 0; i < 8; i++) {
-                    let valorFinal = aluno.valoresFinais[i];
-                    let usadas = aluno.compensacoesUsadas[i];
-                    
-                    let classeAdicional = valorFinal === 0 ? 'zero-val' : '';
-                    let formatacao = usadas > 0 ? `class="td-final highlight-val"` : `class="td-final ${classeAdicional}"`;
-                    
-                    let conteudoCelula = valorFinal;
-                    if (usadas > 0) {
-                        conteudoCelula += `<span class="comp-info" title="Compensações aplicadas nesta matéria">(-${usadas})</span>`;
+                // Colunas Finais: Só renderiza os números e a cor se a compensação for MAIOR que 0
+                if (aluno.totalCompensacoes > 0) {
+                    for(let i = 0; i < 8; i++) {
+                        let valorFinal = aluno.valoresFinais[i];
+                        let usadas = aluno.compensacoesUsadas[i];
+                        
+                        let classeAdicional = valorFinal === 0 ? 'zero-val' : '';
+                        let formatacao = usadas > 0 ? `class="td-final highlight-val"` : `class="td-final ${classeAdicional}"`;
+                        
+                        let conteudoCelula = valorFinal;
+                        if (usadas > 0) {
+                            conteudoCelula += `<span class="comp-info" title="Compensações aplicadas nesta matéria">(-${usadas})</span>`;
+                        }
+                        
+                        tr.innerHTML += `<td ${formatacao}>${conteudoCelula}</td>`;
                     }
-                    
-                    tr.innerHTML += `<td ${formatacao}>${conteudoCelula}</td>`;
+                } else {
+                    for(let i = 0; i < 8; i++) {
+                        tr.innerHTML += `<td style="background-color: var(--bg-neutral); color: #94a3b8;">-</td>`;
+                    }
                 }
 
                 tr.innerHTML += `
