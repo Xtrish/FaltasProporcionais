@@ -1,5 +1,5 @@
 // Ao atualizar o site (ex.: novo bimestre), mude a versão abaixo
-const CACHE = 'faltas-v2';
+const CACHE = 'faltas-v3';
 const ARQUIVOS = [
   './manifest.webmanifest',
   './config.json',
@@ -33,6 +33,8 @@ self.addEventListener('message', e => {
 // Internet primeiro (sempre a versão mais nova); sem internet, usa a cópia salva
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // Só cuida dos arquivos do próprio site (estatísticas e outros sites passam direto)
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then(resp => {

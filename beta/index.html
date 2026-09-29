@@ -10,6 +10,8 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Faltas">
+    <script data-goatcounter="https://rmigao.goatcounter.com/count"
+            async src="//gc.zgo.at/count.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -520,6 +522,7 @@
             });
 
             renderizarTabela();
+            contar('lancar', 'Lançou aluno');
             inputNome.value = '';
             inputFalta.value = '';
             inputComp.value = '';
@@ -612,6 +615,7 @@
                 csvContent += linha.join(";") + "\r\n";
             });
             baixarArquivo("\uFEFF" + csvContent, "relatorio_faltas_completo.csv", 'text/csv;charset=utf-8;');
+            contar('excel', 'Baixou Excel');
         }
 
         function baixarArquivo(conteudo, nomeArquivo, tipo) {
@@ -710,6 +714,7 @@
             usandoLocal = true;
             aplicarConfig();
             fecharConfig();
+            contar('config-teste', 'Testou configuração local');
         }
 
         function voltarOficial() {
@@ -726,7 +731,26 @@
             const linhas = cfg.disciplinas.map(d => '    ' + JSON.stringify(d)).join(',\n');
             const json = `{\n  "bimestre": ${JSON.stringify(cfg.bimestre)},\n  "disciplinas": [\n${linhas}\n  ]\n}\n`;
             baixarArquivo(json, 'config.json', 'application/json');
+            contar('config-baixada', 'Baixou config.json');
         }
+
+        // ---------- Estatísticas (GoatCounter) ----------
+        function contar(evento, titulo) {
+            try {
+                if (window.goatcounter && window.goatcounter.count) {
+                    window.goatcounter.count({ path: evento, title: titulo || evento, event: true });
+                }
+            } catch (e) { /* sem internet ou bloqueado: ignora */ }
+        }
+
+        // Conta se o app foi aberto já instalado (depois que o script carregar)
+        window.addEventListener('load', () => {
+            const instalado = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+            if (instalado) setTimeout(() => contar('aberto-como-app', 'Aberto como app instalado'), 1500);
+        });
+
+        // Conta impressões, seja pelo botão ou pelo Ctrl+P
+        window.addEventListener('beforeprint', () => contar('imprimir', 'Imprimiu relatório'));
 
         carregarConfig();
 
@@ -761,6 +785,7 @@
         });
 
         window.addEventListener('appinstalled', () => {
+            contar('instalou', 'Instalou o app');
             btnInstalar.style.display = 'none';
         });
     </script>
