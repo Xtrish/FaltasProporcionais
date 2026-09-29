@@ -1,7 +1,8 @@
 // Ao atualizar o site (ex.: novo bimestre), mude a versão abaixo
-const CACHE = 'faltas-v1';
+const CACHE = 'faltas-v2';
 const ARQUIVOS = [
   './manifest.webmanifest',
+  './config.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
