@@ -1,0 +1,13 @@
+{
+  "bimestre": "3º Bimestre 2026",
+  "disciplinas": [
+    { "nome": "Língua Portuguesa", "sigla": "Por", "aulas": 15, "limite": 3 },
+    { "nome": "Matemática",        "sigla": "Mat", "aulas": 13, "limite": 2 },
+    { "nome": "Educação Física",   "sigla": "EdF", "aulas": 4,  "limite": 1 },
+    { "nome": "Artes",             "sigla": "Art", "aulas": 4,  "limite": 1 },
+    { "nome": "Geografia",         "sigla": "Geo", "aulas": 4,  "limite": 1 },
+    { "nome": "História",          "sigla": "His", "aulas": 4,  "limite": 1 },
+    { "nome": "Ciências",          "sigla": "Cie", "aulas": 7,  "limite": 1 },
+    { "nome": "Ensino Religioso",  "sigla": "Rel", "aulas": 2,  "limite": 0 }
+  ]
+}
