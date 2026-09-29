@@ -4,6 +4,7 @@
   "description": "Distribuição proporcional de faltas por disciplina e cálculo de compensações.",
   "lang": "pt-BR",
   "id": "./",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
